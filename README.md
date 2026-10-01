@@ -31,8 +31,9 @@ dependencies {
 
 ## 1. Your backend mints the token
 
-Never put a HaloAI PAT in the app. After your own login succeeds, your server calls
-`POST /api/open/inApp/v1/clientToken` with its PAT and returns the `hct_…` token.
+Never put the channel's HaloChat server key (`hck_…`) in the app. After your own login
+succeeds, your server calls `POST /api/open/inApp/v1/clientToken` with that key and returns
+the `hct_…` token.
 
 ## 2. Create the client
 

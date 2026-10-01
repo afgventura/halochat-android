@@ -78,9 +78,9 @@ public sealed class HaloChatException(message: String) : Exception(message) {
 }
 
 /**
- * Supplies HaloChat client tokens (`hct_…`), minted by YOUR backend with its PAT.
+ * Supplies HaloChat client tokens (`hct_…`), minted by YOUR backend with the channel's server key.
  * `forceRefresh` is true after the server refused the current token: mint a new one.
- * Never embed a HaloAI PAT in the app.
+ * Never embed the server key (`hck_…`) in the app.
  */
 public fun interface HaloChatTokenProvider {
     public suspend fun token(forceRefresh: Boolean): String
