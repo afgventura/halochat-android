@@ -124,6 +124,11 @@ once through the HaloAI team (`channel_in_app_set_push_credentials`).
 `./gradlew test` (JDK 17). Without a local JDK:
 `docker run --rm -v "$PWD":/work -w /work gradle:8.10.2-jdk17 ./gradlew test`.
 
+## Sample
+
+`example/` is a console sample on the published JitPack artifact (the SDK is plain
+Kotlin/JVM, so it runs the same code as an Android app). See `example/README.md`.
+
 ## License
 
 Copyright 2026 HaloAI. Licensed under the [Apache License 2.0](LICENSE): free to use,

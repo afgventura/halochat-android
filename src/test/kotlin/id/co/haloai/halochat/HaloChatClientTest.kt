@@ -2,7 +2,11 @@ package id.co.haloai.halochat
 
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withTimeout
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.mockwebserver.MockResponse
@@ -59,6 +63,47 @@ class HaloChatClientTest {
         assertEquals("key-12345678", request.getHeader("Idempotency-Key"))
         assertEquals("Bearer hct_token_1", request.getHeader("Authorization"))
         assertEquals("halo", haloJson.parseToJsonElement(request.body.readUtf8()).jsonObject["text"]?.jsonPrimitive?.content)
+    }
+
+    @Test
+    fun concurrentFirstCallsMintOneToken() = runTest {
+        // A real backend takes time to mint; every call it receives is a new server session.
+        val calls = AtomicInteger(0)
+        val gate = TokenGate(HaloChatTokenProvider { _ ->
+            calls.incrementAndGet()
+            delay(50)
+            "hct_first"
+        })
+        val tokens = (1..3).map { async { gate.token() } }.awaitAll()
+
+        assertEquals(setOf("hct_first"), tokens.toSet())
+        assertEquals(1, calls.get(), "concurrent first callers must share one mint, not each start a session")
+    }
+
+    @Test
+    fun timelineBackfillsThenCatchesUpByPollingWhenTheSocketIsDown() = runBlocking {
+        fun message(id: String, second: Int) =
+            """{"id":"$id","text":"t","sender":"agent","senderKind":"ai","hasMedia":false,"mediaType":null,"mediaFilename":null,"createdAt":"2026-09-29T08:00:0$second.000Z","status":null}"""
+        fun page(messages: List<String>, newest: String) =
+            ok("""{"status":"ok","data":{"messages":[${messages.joinToString(",")}],"newestCursor":"$newest","oldestCursor":"c0"}}""")
+        server.enqueue(page(listOf(message("m1", 1)), "c1")) // backfill
+        server.enqueue(page(listOf(message("m1", 1)), "c1")) // catch-up: overlap only
+        server.enqueue(page(listOf(message("m1", 1), message("m2", 2)), "c2")) // poll while the socket is down
+        val offline = HaloChatClient(
+            config = HaloChatConfig(
+                baseUrl = server.url("/").toString(),
+                realtimeUrl = "ws://127.0.0.1:1/ws/client",
+                pollIntervalMillis = 1_000,
+            ),
+            tokenProvider = { "hct_token" },
+        )
+
+        val timeline = withTimeout(10_000) { offline.timeline().first { it.size == 2 } }
+
+        assertEquals(listOf("m1", "m2"), timeline.map { it.id }, "polling must deliver the new message once, in order")
+        server.takeRequest() // backfill
+        val catchUp = server.takeRequest()
+        assertEquals("c1", catchUp.requestUrl?.queryParameter("after"), "catch-up must resume from the backfill cursor")
     }
 
     @Test
