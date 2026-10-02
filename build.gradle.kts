@@ -46,6 +46,16 @@ publishing {
         create<MavenPublication>("halochat") {
             artifactId = "halochat"
             from(components["java"])
+            pom {
+                name.set("HaloChat for Android")
+                url.set("https://github.com/afgventura/halochat-android")
+                licenses {
+                    license {
+                        name.set("Apache-2.0")
+                        url.set("https://www.apache.org/licenses/LICENSE-2.0")
+                    }
+                }
+            }
         }
     }
 }
