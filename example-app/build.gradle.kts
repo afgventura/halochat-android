@@ -12,7 +12,7 @@ android {
         minSdk = 21
         targetSdk = 35
         versionCode = 1
-        versionName = "0.2.0"
+        versionName = "0.2.1"
         // The stand-in backend (../../halochat-ios/Example/backend/server.mjs) on the host
         // machine, as seen from the Android emulator.
         buildConfigField("String", "TOKEN_BACKEND", "\"${project.findProperty("tokenBackend") ?: "http://10.0.2.2:8791"}\"")
@@ -39,7 +39,7 @@ kotlin {
 
 dependencies {
     // Resolved to ../ui by the composite build in settings.gradle.kts.
-    implementation("id.co.haloai:halochat-ui:0.2.0")
+    implementation("id.co.haloai:halochat-ui:0.2.1")
     implementation("androidx.appcompat:appcompat:1.7.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7")
 }

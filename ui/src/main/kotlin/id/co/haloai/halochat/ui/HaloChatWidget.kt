@@ -72,8 +72,22 @@ public class HaloChatWidget private constructor(
      * Signs the user in. [tokenProvider] asks YOUR backend for an `hct_` token (`forceRefresh` =
      * HaloAI refused the last one, mint a new one). Replaces any previous user's client.
      */
-    @JvmOverloads
-    public fun setUser(tokenProvider: HaloChatTokenProvider, coreConfig: HaloChatConfig = HaloChatConfig()) {
+    public fun setUser(tokenProvider: HaloChatTokenProvider) {
+        setUser(tokenProvider, HaloChatConfig())
+    }
+
+    /**
+     * [setUser] with a non-default [coreConfig] (another HaloAI environment). The trailing-lambda
+     * form `setUser(config) { forceRefresh -> … }` takes the provider last.
+     */
+    public fun setUser(coreConfig: HaloChatConfig, tokenProvider: HaloChatTokenProvider) {
+        setUser(tokenProvider, coreConfig)
+    }
+
+    // Explicit overloads instead of a default argument: with `coreConfig` last and defaulted,
+    // Kotlin bound the documented `setUser { forceRefresh -> … }` lambda to `coreConfig`, which
+    // does not compile. These keep 0.2.0's JVM signatures, so Java callers are unaffected.
+    public fun setUser(tokenProvider: HaloChatTokenProvider, coreConfig: HaloChatConfig) {
         val client = HaloChatClient(config = coreConfig, tokenProvider = tokenProvider, httpClient = http)
         currentClient = client
         media.clear()
@@ -84,8 +98,12 @@ public class HaloChatWidget private constructor(
      * [setUser] for Java callers, whose token provider cannot be a suspend function. The SDK calls
      * [tokenProvider] on a background thread, so it may block on your network call.
      */
-    @JvmOverloads
-    public fun setUserBlocking(tokenProvider: HaloChatBlockingTokenProvider, coreConfig: HaloChatConfig = HaloChatConfig()) {
+    public fun setUserBlocking(tokenProvider: HaloChatBlockingTokenProvider) {
+        setUserBlocking(tokenProvider, HaloChatConfig())
+    }
+
+    /** [setUserBlocking] with a non-default [coreConfig]. */
+    public fun setUserBlocking(tokenProvider: HaloChatBlockingTokenProvider, coreConfig: HaloChatConfig) {
         setUser({ forceRefresh -> withContext(Dispatchers.IO) { tokenProvider.token(forceRefresh) } }, coreConfig)
     }
 

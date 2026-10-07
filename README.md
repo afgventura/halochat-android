@@ -29,14 +29,14 @@ dependencyResolutionManagement {
 
 // app/build.gradle.kts
 dependencies {
-    implementation("com.github.afgventura.halochat-android:halochat-ui:0.2.0")
+    implementation("com.github.afgventura.halochat-android:halochat-ui:0.2.1")
 }
 ```
 
 JitPack serves this repository as a multi-module build: one module is
 `com.github.afgventura.halochat-android:<artifactId>:<tag>`. `halochat-ui` pulls in the core;
-core only (no UI) is `com.github.afgventura.halochat-android:halochat:0.2.0`.
-(`com.github.afgventura:halochat-android:0.2.0` would fetch every module.)
+core only (no UI) is `com.github.afgventura.halochat-android:halochat:0.2.1`.
+(`com.github.afgventura:halochat-android:0.2.1` would fetch every module.)
 
 ## Quick start
 
@@ -239,7 +239,7 @@ the screen does not cover.
 
 ## Advanced: core SDK without UI
 
-`com.github.afgventura.halochat-android:halochat:0.2.0` is a plain Kotlin/JVM library (Java 8
+`com.github.afgventura.halochat-android:halochat:0.2.1` is a plain Kotlin/JVM library (Java 8
 bytecode; no `java.time`, so minSdk 21+ works without desugaring) built on OkHttp 4, kotlinx
 coroutines and kotlinx.serialization. The app needs the `INTERNET` permission.
 

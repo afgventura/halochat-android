@@ -15,7 +15,7 @@ group = System.getenv("GROUP")
     ?.takeIf { System.getenv("JITPACK") == "true" }
     ?.let { "$it.${System.getenv("ARTIFACT")}" }
     ?: "id.co.haloai"
-version = "0.2.0"
+version = "0.2.1"
 
 dependencies {
     api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
