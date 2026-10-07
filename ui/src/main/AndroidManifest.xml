@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- Lets the SDK check whether any app can open a downloaded attachment (Android 11+). -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:mimeType="*/*" />
+        </intent>
+        <intent>
+            <action android:name="android.media.action.IMAGE_CAPTURE" />
+        </intent>
+    </queries>
+
+    <application>
+        <activity
+            android:name="id.co.haloai.halochat.ui.HaloChatActivity"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:theme="@style/halochat_Theme"
+            android:windowSoftInputMode="adjustResize|stateHidden" />
+
+        <activity
+            android:name="id.co.haloai.halochat.ui.HaloChatImageActivity"
+            android:exported="false"
+            android:theme="@style/halochat_Theme.Viewer" />
+
+        <!-- The SDK's own provider (own authority and class), so it never collides with the app's. -->
+        <provider
+            android:name="id.co.haloai.halochat.ui.HaloChatFileProvider"
+            android:authorities="${applicationId}.halochat.fileprovider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/halochat_file_paths" />
+        </provider>
+    </application>
+</manifest>

@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="halochat_subtitle_default">Customer Service</string>
+    <string name="halochat_empty">Send a message to start the conversation</string>
+    <string name="halochat_loading">Loading…</string>
+    <string name="halochat_banner_reconnecting">Reconnecting…</string>
+    <string name="halochat_banner_rate_limited">Too many requests. Retrying shortly…</string>
+    <string name="halochat_session_expired">Session expired. Please sign in again.</string>
+    <string name="halochat_today">Today</string>
+    <string name="halochat_yesterday">Yesterday</string>
+    <string name="halochat_composer_hint">Type a message</string>
+    <string name="halochat_back">Back</string>
+    <string name="halochat_attach">Attach</string>
+    <string name="halochat_send">Send</string>
+    <string name="halochat_attach_title">Send a file</string>
+    <string name="halochat_attach_camera">Camera</string>
+    <string name="halochat_attach_gallery">Photo or video</string>
+    <string name="halochat_attach_document">Document</string>
+    <string name="halochat_error_too_large">File is too large (max 25 MB).</string>
+    <string name="halochat_error_unsupported_type">This file type is not supported. Send a photo, video, audio, PDF, Word, Excel or text file.</string>
+    <string name="halochat_error_read_failed">Could not read the file.</string>
+    <string name="halochat_error_no_app">No app can open this file.</string>
+    <string name="halochat_error_download">Could not download the file.</string>
+    <string name="halochat_error_camera_permission">Camera permission is needed to take a photo.</string>
+    <string name="halochat_status_sending">Sending…</string>
+    <string name="halochat_failed_network">Not sent.</string>
+    <string name="halochat_failed_rate_limited">Too many messages.</string>
+    <string name="halochat_failed_session">Session expired.</string>
+    <string name="halochat_failed_tap_retry">Tap to retry.</string>
+    <string name="halochat_tap_to_open">Tap to open</string>
+    <string name="halochat_opening_file">Opening file…</string>
+    <string name="halochat_open_with">Open with</string>
+    <string name="halochat_unsupported_message">This message is not supported</string>
+    <string name="halochat_attachment">Attachment</string>
+    <string name="halochat_image">Image</string>
+    <string name="halochat_close">Close</string>
+    <string name="halochat_status_sent">Sent</string>
+    <string name="halochat_status_read">Read</string>
+    <string name="halochat_status_failed">Failed</string>
+    <string name="halochat_notification_channel" translatable="false">HaloChat</string>
+    <string name="halochat_notification_default_title">New message</string>
+</resources>

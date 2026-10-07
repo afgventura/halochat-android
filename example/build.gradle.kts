@@ -5,7 +5,8 @@ plugins {
 
 dependencies {
     // The published artifact, exactly as an app installs it.
-    implementation("com.github.afgventura:halochat-android:0.1.0")
+    // JitPack serves this multi-module repo as com.github.afgventura.halochat-android:<artifactId>.
+    implementation("com.github.afgventura.halochat-android:halochat:0.2.0")
 }
 
 kotlin { jvmToolchain(17) }

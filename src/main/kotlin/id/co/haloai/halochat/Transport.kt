@@ -1,6 +1,8 @@
 package id.co.haloai.halochat
 
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.KSerializer
@@ -99,7 +101,10 @@ internal class Transport(
             response = execute(authorized(request, tokens.refresh(rejected = token)))
         }
         response.use {
-            val body = it.body?.string().orEmpty()
+            // Reading the body is blocking socket I/O: never on the caller's thread, which on
+            // Android is usually Main (lifecycleScope / viewModelScope) and would throw
+            // NetworkOnMainThreadException on every call.
+            val body = withContext(Dispatchers.IO) { it.body?.string().orEmpty() }
             check(it, body)
             return body
         }
