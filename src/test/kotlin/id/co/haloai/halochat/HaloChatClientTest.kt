@@ -7,7 +7,11 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.withTimeout
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.put
 import kotlinx.serialization.json.jsonPrimitive
 import okhttp3.mockwebserver.MockResponse
 import okhttp3.mockwebserver.MockWebServer
@@ -63,6 +67,32 @@ class HaloChatClientTest {
         assertEquals("key-12345678", request.getHeader("Idempotency-Key"))
         assertEquals("Bearer hct_token_1", request.getHeader("Authorization"))
         assertEquals("halo", haloJson.parseToJsonElement(request.body.readUtf8()).jsonObject["text"]?.jsonPrimitive?.content)
+    }
+
+    @Test
+    fun sendWithoutExtrasOmitsTheFieldAndDecodesNull() = runTest {
+        server.enqueue(ok("""{"status":"ok","data":{"message":$messageJson}}"""))
+        val message = client.send("halo", clientMessageId = "key-12345678")
+
+        assertNull(message.extras)
+        assertFalse("extras" in haloJson.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject)
+    }
+
+    @Test
+    fun sendWithExtrasPostsAndDecodesTheObject() = runTest {
+        val extras = buildJsonObject {
+            put("id", 42)
+            put("type", "anamnesa")
+            put("metadata", buildJsonObject { put("photos", buildJsonArray { add(JsonPrimitive("https://x/a.jpg")) }) })
+        }
+        val withExtras = messageJson.removeSuffix("}") + ""","extras":$extras}"""
+        server.enqueue(ok("""{"status":"ok","data":{"message":$withExtras}}"""))
+        val message = client.send("Anamnesa", extras, clientMessageId = "key-12345678")
+
+        assertEquals(extras, message.extras)
+        val body = haloJson.parseToJsonElement(server.takeRequest().body.readUtf8()).jsonObject
+        assertEquals(extras, body["extras"])
+        assertEquals("Anamnesa", body["text"]?.jsonPrimitive?.content)
     }
 
     @Test

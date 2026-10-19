@@ -3,6 +3,7 @@ package id.co.haloai.halochat
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.conflate
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonObject
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -57,6 +58,17 @@ public class HaloChatClient(
      */
     public suspend fun send(text: String, clientMessageId: String = UUID.randomUUID().toString()): HaloChatMessage =
         sendMessage(SendBody(text = text), clientMessageId)
+
+    /**
+     * Sends a text message with [extras], a free-form JSON object of at most 16 KB (the Qiscus
+     * `extras` field). The server stores it and returns it as [HaloChatMessage.extras] in history
+     * and realtime events. [clientMessageId] works as in [send].
+     */
+    public suspend fun send(
+        text: String,
+        extras: JsonObject,
+        clientMessageId: String = UUID.randomUUID().toString(),
+    ): HaloChatMessage = sendMessage(SendBody(text = text, extras = extras), clientMessageId)
 
     /** Uploads an attachment and sends it, optionally with a caption. */
     public suspend fun sendAttachment(
@@ -151,7 +163,7 @@ public class HaloChatClient(
 }
 
 @Serializable
-internal data class SendBody(val text: String? = null, val uploadId: String? = null)
+internal data class SendBody(val text: String? = null, val uploadId: String? = null, val extras: JsonObject? = null)
 
 @Serializable
 internal data class SentMessage(val message: HaloChatMessage)

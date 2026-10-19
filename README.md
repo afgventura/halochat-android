@@ -29,14 +29,14 @@ dependencyResolutionManagement {
 
 // app/build.gradle.kts
 dependencies {
-    implementation("com.github.afgventura.halochat-android:halochat-ui:0.2.1")
+    implementation("com.github.afgventura.halochat-android:halochat-ui:0.3.0")
 }
 ```
 
 JitPack serves this repository as a multi-module build: one module is
 `com.github.afgventura.halochat-android:<artifactId>:<tag>`. `halochat-ui` pulls in the core;
-core only (no UI) is `com.github.afgventura.halochat-android:halochat:0.2.1`.
-(`com.github.afgventura:halochat-android:0.2.1` would fetch every module.)
+core only (no UI) is `com.github.afgventura.halochat-android:halochat:0.3.0`.
+(`com.github.afgventura:halochat-android:0.3.0` would fetch every module.)
 
 ## Quick start
 
@@ -239,7 +239,7 @@ the screen does not cover.
 
 ## Advanced: core SDK without UI
 
-`com.github.afgventura.halochat-android:halochat:0.2.1` is a plain Kotlin/JVM library (Java 8
+`com.github.afgventura.halochat-android:halochat:0.3.0` is a plain Kotlin/JVM library (Java 8
 bytecode; no `java.time`, so minSdk 21+ works without desugaring) built on OkHttp 4, kotlinx
 coroutines and kotlinx.serialization. The app needs the `INTERNET` permission.
 
@@ -283,6 +283,25 @@ chat.sendAttachment(bytes, "ktp.jpg", "image/jpeg", caption = "KTP saya")
 val url = chat.mediaUrl(message.id)     // short-lived download URL
 ```
 
+#### Extras (custom data on a message)
+
+`extras` is a free-form JSON object (at most 16 KB) that the server stores with the message and
+returns unchanged. It works like the Qiscus `extras` field. Your app decides what it means, for
+example a custom bubble. `message.extras` is `null` on every message sent without it.
+
+```kotlin
+val extras = buildJsonObject {
+    put("type", "anamnesa")
+    put("metadata", buildJsonObject { put("photos", buildJsonArray { add(JsonPrimitive(photoUrl)) }) })
+}
+chat.send("Anamnesa", extras, clientMessageId = id)
+
+// History and realtime messages carry it back:
+if (message.extras?.get("type")?.jsonPrimitive?.content == "anamnesa") { /* show your bubble */ }
+```
+
+Needs SDK 0.3.0 and a server with `extras` support. A server without it ignores the field.
+
 ### Push (background)
 
 ```kotlin
@@ -322,7 +341,7 @@ once through the HaloAI team (`channel_in_app_set_push_credentials`).
 | `QiscusCore.initWithAppId` | `HaloChatClient(config, tokenProvider)` |
 | `QiscusCore.setUser(userId, userKey)` | backend-minted `hct_` token via `tokenProvider` |
 | `chatUser` / `getAllChatRooms` | `conversation()` (one CS room per user) |
-| `sendMessage` / file upload | `send(...)`, `sendAttachment(...)` |
+| `sendMessage` / file upload | `send(...)`, `send(text, extras)`, `sendAttachment(...)` |
 | EventBus `QiscusCommentReceivedEvent` | `timeline()` `Flow` |
 | `QiscusCore.registerDeviceToken` | `registerPushToken(...)` |
 | `QiscusCore.clearUser` | `signOut()` + drop the client |

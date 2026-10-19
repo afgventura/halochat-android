@@ -15,12 +15,13 @@ group = System.getenv("GROUP")
     ?.takeIf { System.getenv("JITPACK") == "true" }
     ?.let { "$it.${System.getenv("ARTIFACT")}" }
     ?: "id.co.haloai"
-version = "0.2.1"
+version = "0.3.0"
 
 dependencies {
     api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.9.0")
     api("com.squareup.okhttp3:okhttp:4.12.0")
-    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
+    // api, not implementation: HaloChatMessage.extras and send(extras) expose JsonObject.
+    api("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
 
     testImplementation(kotlin("test"))
     testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")

@@ -2,6 +2,7 @@ package id.co.haloai.halochat
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonObject
 
 /** One message of the end user's conversation. Mirrors the server's `ClientMessage`. */
 @Serializable
@@ -17,6 +18,11 @@ public data class HaloChatMessage(
     /** ISO-8601 instant. */
     val createdAt: String,
     val status: Status? = null,
+    /**
+     * Free-form JSON object sent with the message (the Qiscus `extras` field), or null. The
+     * server returns it unchanged. Your app decides what it means, for example a custom bubble.
+     */
+    val extras: JsonObject? = null,
 ) {
     @Serializable
     public enum class Sender {
