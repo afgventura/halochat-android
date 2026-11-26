@@ -18,7 +18,6 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 
-/** Full-screen image viewer. Fetches a fresh media URL every time it opens. */
 internal class HaloChatImageActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

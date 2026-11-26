@@ -6,14 +6,12 @@ import android.provider.OpenableColumns
 import android.webkit.MimeTypeMap
 import java.io.ByteArrayOutputStream
 
-/** Outcome of reading a picked file. */
 internal sealed class ReadResult {
     class Ok(val attachment: PendingAttachment) : ReadResult()
     class Rejected(val problem: AttachmentProblem) : ReadResult()
     object Failed : ReadResult()
 }
 
-/** Reads a picked / captured file through the content resolver, validating before and after reading. */
 internal object AttachmentReader {
     fun read(resolver: ContentResolver, uri: Uri, nameOverride: String?, mimeOverride: String?): ReadResult = try {
         var name: String? = nameOverride
@@ -47,7 +45,6 @@ internal object AttachmentReader {
         ReadResult.Failed
     }
 
-    /** Null when the stream is larger than the limit (the reported size can be missing or wrong). */
     private fun readCapped(resolver: ContentResolver, uri: Uri): ByteArray? {
         val input = resolver.openInputStream(uri) ?: throw java.io.IOException("cannot open $uri")
         input.use { stream ->
@@ -68,7 +65,6 @@ internal object AttachmentReader {
     private fun defaultExtension(mime: String): String =
         MimeTypeMap.getSingleton().getExtensionFromMimeType(mime)?.let { ".$it" } ?: ""
 
-    /** The server and the agent's viewer key off the filename too; make sure it has an extension. */
     private fun withExtension(filename: String, mime: String): String =
         if (AttachmentRules.extensionOf(filename) != null) filename else filename + defaultExtension(mime)
 }

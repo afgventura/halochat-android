@@ -32,7 +32,6 @@ internal fun ImageView.tint(color: Int) {
 
 internal fun isLight(color: Int): Boolean = ColorUtils.calculateLuminance(color) > 0.5
 
-/** Icon for a file card by MIME type. */
 internal fun iconFor(mimeType: String?): Int = when {
     mimeType == null -> R.drawable.halochat_ic_file
     mimeType.startsWith("image/") -> R.drawable.halochat_ic_image

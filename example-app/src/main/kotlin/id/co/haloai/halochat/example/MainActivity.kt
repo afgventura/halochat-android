@@ -15,10 +15,6 @@ import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
 
-/**
- * Sign in → open the chat → sign out. The token comes from YOUR backend after your own login;
- * here the stand-in backend (`halochat-ios/Example/backend/server.mjs`) mints it.
- */
 class MainActivity : AppCompatActivity() {
     private val widget get() = HaloChatWidget.instance
     private lateinit var status: TextView
@@ -39,7 +35,6 @@ class MainActivity : AppCompatActivity() {
                     HaloChatConfig(baseUrl = base, realtimeUrl = base.replaceFirst("http", "ws") + "/ws/client")
                 }
                 widget.setUser({ forceRefresh -> mintToken(userId, forceRefresh) }, coreConfig)
-                // With Firebase: widget.registerDeviceToken(FirebaseMessaging.getInstance().token.await())
                 refresh()
             }
         }
@@ -67,7 +62,6 @@ class MainActivity : AppCompatActivity() {
             addView(status)
         })
         refresh()
-        // Launched from a system-displayed (background) HaloChat push: open the chat directly.
         if (widget.isLoggedIn()) widget.tapNotification(this, intent)
     }
 
@@ -80,7 +74,6 @@ class MainActivity : AppCompatActivity() {
         status.text = if (widget.isLoggedIn()) "Signed in" else "Signed out"
     }
 
-    /** forceRefresh = HaloAI refused the last token: ask the backend for a new one. */
     private suspend fun mintToken(userId: String, forceRefresh: Boolean): String = withContext(Dispatchers.IO) {
         val url = URL(
             "${BuildConfig.TOKEN_BACKEND}/halochat-token?user=${URLEncoder.encode(userId, "UTF-8")}" +

@@ -8,14 +8,6 @@ import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 
-/**
- * Minimal HaloChat chat on the JVM: the SDK is plain Kotlin/JVM, so this is the
- * same code an Android app runs. The token comes from YOUR backend after your own
- * login; here a stand-in backend (../../halochat-ios/Example/backend/server.mjs)
- * mints it with the channel's server key.
- *
- *   ./gradlew -p example run --args="sample-user-1 Halo dari Android"
- */
 fun main(args: Array<String>) = runBlocking {
     val user = args.getOrElse(0) { "sample-user-1" }
     val text = args.drop(1).joinToString(" ").ifBlank { "Halo dari sample Android" }
@@ -23,7 +15,6 @@ fun main(args: Array<String>) = runBlocking {
     val http = HttpClient.newHttpClient()
 
     val chat = HaloChatClient(tokenProvider = { forceRefresh ->
-        // forceRefresh == true means HaloAI refused the last token: mint a new one.
         val request = HttpRequest.newBuilder(
             URI("$backend/halochat-token?user=$user&refresh=${if (forceRefresh) 1 else 0}"),
         ).build()
@@ -36,7 +27,6 @@ fun main(args: Array<String>) = runBlocking {
     val sent = chat.send(text)
     println("sent: ${sent.id} status=${sent.status}")
 
-    // Backfill + realtime + polling fallback; wait for the business side to answer.
     val withReply = withTimeout(180_000) {
         chat.timeline().first { messages -> messages.any { it.sender == HaloChatMessage.Sender.AGENT } }
     }

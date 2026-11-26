@@ -23,7 +23,6 @@ import kotlinx.coroutines.launch
 import java.util.Date
 import java.util.Locale
 
-/** What the list needs from the screen. */
 internal interface ChatActions {
     fun retry(clientMessageId: String)
     fun openImage(message: HaloChatMessage)
@@ -99,7 +98,6 @@ internal class ChatAdapter(
         val text: TextView = frame.getChildAt(0) as TextView
     }
 
-    /** One chat bubble, incoming or outgoing, server-confirmed or pending. Built in code. */
     private inner class BubbleHolder(context: Context) : RecyclerView.ViewHolder(LinearLayout(context)) {
         private val root = itemView as LinearLayout
         private val senderRow = LinearLayout(context)

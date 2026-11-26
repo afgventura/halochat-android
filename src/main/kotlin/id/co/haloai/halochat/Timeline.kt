@@ -22,24 +22,17 @@ import java.text.SimpleDateFormat
 import java.util.Locale
 import java.util.TimeZone
 
-/**
- * Merges messages by id and keeps them ascending by createdAt (ties by id).
- * The server re-sends a short overlap on polls and a socket event can repeat a
- * message already fetched, so every source funnels through here.
- */
 internal class MessageMerger {
     private val byId = LinkedHashMap<String, HaloChatMessage>()
     private val sortKey = HashMap<String, Long>()
     var newestCursor: String? = null
         private set
 
-    /** Returns true when the timeline changed. */
     fun merge(messages: List<HaloChatMessage>): Boolean {
         var changed = false
         for (message in messages) {
             if (byId[message.id] != message) {
                 byId[message.id] = message
-                // Parsed once here (not per comparison); an unparseable date sorts first.
                 sortKey[message.id] = parseUtcMillis(message.createdAt) ?: 0L
                 changed = true
             }
@@ -60,10 +53,6 @@ internal class MessageMerger {
         get() = byId.values.sortedWith(compareBy({ sortKey[it.id] ?: 0L }, { it.id }))
 
     internal companion object {
-        /**
-         * The server always sends UTC `yyyy-MM-ddTHH:mm:ss.SSSZ`. SimpleDateFormat instead of
-         * java.time keeps this working on API 21-25 without core-library desugaring.
-         */
         fun parseUtcMillis(raw: String): Long? {
             for (pattern in listOf("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", "yyyy-MM-dd'T'HH:mm:ss'Z'")) {
                 val format = SimpleDateFormat(pattern, Locale.US).apply {
@@ -77,7 +66,6 @@ internal class MessageMerger {
     }
 }
 
-/** One realtime frame from `/ws/client`. */
 internal sealed class RealtimeEvent {
     object Authenticated : RealtimeEvent()
     data class Message(val message: HaloChatMessage) : RealtimeEvent()
@@ -99,7 +87,6 @@ internal sealed class RealtimeEvent {
     }
 }
 
-/** Drives a live timeline: backfill, then socket; on socket loss, catch up and poll, then retry the socket. */
 internal class Timeline(
     private val client: HaloChatClient,
     private val initialLimit: Int,
@@ -133,13 +120,11 @@ internal class Timeline(
         }
     }
 
-    /** Reports an error; honours the server's Retry-After before the caller continues. */
     private suspend fun report(error: Throwable) {
         onError?.invoke(error)
         if (error is HaloChatException.RateLimited) delay(error.retryAfterSeconds * 1_000L)
     }
 
-    /** Fetches everything newer than the cursor, page by page (bounded). */
     private suspend fun catchUp(emit: suspend (List<HaloChatMessage>) -> Unit) {
         repeat(MAX_CATCH_UP_PAGES) {
             val cursor = lock.withLock { merger.newestCursor }
@@ -157,7 +142,6 @@ internal class Timeline(
                 if (didChange) merger.ordered else null
             }
             changed?.let { emit(it) }
-            // `after` pages include an overlap window, so "full" means strictly new rows filled it.
             if (page.messages.size < CATCH_UP_PAGE_SIZE) return
         }
     }
@@ -171,7 +155,6 @@ internal class Timeline(
         if (changed) merger.ordered else null
     }
 
-    /** Returns whether the socket authenticated before it ended. */
     private suspend fun runSocket(emit: suspend (List<HaloChatMessage>) -> Unit): Boolean {
         val token = try {
             client.transport.tokens.token()
@@ -195,7 +178,6 @@ internal class Timeline(
                 }
 
                 override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
-                    // Answer with a normal close; echoing the server's code can be a reserved one.
                     webSocket.close(1000, null)
                     closed.complete(code)
                     frames.close()
@@ -213,7 +195,6 @@ internal class Timeline(
                 val event = RealtimeEvent.decode(text)
                 if (event == RealtimeEvent.Authenticated) {
                     authenticated = true
-                    // Anything sent between the last poll and subscription is fetched here.
                     catchUp(emit)
                 }
                 apply(event)?.let { emit(it) }
@@ -222,7 +203,6 @@ internal class Timeline(
             socket.cancel()
         }
         if (closed.isCompleted && closed.getCompleted() == 4001) {
-            // Token refused/expired: re-mint once (single-flight) for the next attempt.
             runCatching { client.transport.tokens.refresh(rejected = token) }
         }
         return authenticated

@@ -23,10 +23,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.UUID
 
-/** What the chat screen renders. */
 internal data class ChatUiState(
     val rows: List<ChatRow> = emptyList(),
-    /** False until the first timeline snapshot (or an error) arrived. */
     val loaded: Boolean = false,
     val title: String? = null,
     val banner: Banner? = null,
@@ -36,11 +34,6 @@ internal data class ChatUiState(
 
 internal enum class Banner { RECONNECTING, RATE_LIMITED }
 
-/**
- * Chat screen state that survives rotation: the live timeline, older pages, send responses and
- * the outgoing queue. The timeline itself only runs while the activity is STARTED
- * ([runTimeline] is called from `repeatOnLifecycle`).
- */
 internal class ChatViewModel(private val saved: SavedStateHandle) : ViewModel() {
     private val widget: HaloChatWidget? = HaloChatWidget.instanceOrNull
     private val client: HaloChatClient? = widget?.client
@@ -57,7 +50,6 @@ internal class ChatViewModel(private val saved: SavedStateHandle) : ViewModel() 
     private val _state = MutableStateFlow(ChatUiState(sessionExpired = client == null, loaded = client == null))
     val state: StateFlow<ChatUiState> = _state.asStateFlow()
 
-    /** Attachment problems and other one-off messages for a toast. */
     private val _notices = Channel<Notice>(Channel.BUFFERED)
     val notices: Flow<Notice> = _notices.receiveAsFlow()
 
@@ -84,7 +76,6 @@ internal class ChatViewModel(private val saved: SavedStateHandle) : ViewModel() 
         }
     }
 
-    /** The composer prefill, returned once per chat (not again after rotation). */
     fun consumeManualMessage(): String? {
         if (saved.get<Boolean>(KEY_MANUAL_USED) == true) return null
         saved[KEY_MANUAL_USED] = true
@@ -101,7 +92,6 @@ internal class ChatViewModel(private val saved: SavedStateHandle) : ViewModel() 
         _notices.trySend(notice)
     }
 
-    /** Collects the live timeline until cancelled (screen stopped) or the session expires. */
     suspend fun runTimeline() {
         val client = client ?: return
         if (_state.value.sessionExpired) return
@@ -126,7 +116,6 @@ internal class ChatViewModel(private val saved: SavedStateHandle) : ViewModel() 
         }
     }
 
-    /** Loads the next older page (scroll to top): latestMessages() first, then messagesBefore(). */
     fun loadOlder() {
         val client = client ?: return
         val current = _state.value
@@ -140,7 +129,6 @@ internal class ChatViewModel(private val saved: SavedStateHandle) : ViewModel() 
                 page.messages.forEach { older[it.id] = it }
                 oldestCursor = page.oldestCursor
                 if (page.messages.isEmpty() || page.oldestCursor == null) reachedStart = true
-                // The first (latest) page usually overlaps the live timeline; keep walking back.
             } catch (error: CancellationException) {
                 throw error
             } catch (error: Exception) {
@@ -164,7 +152,6 @@ internal class ChatViewModel(private val saved: SavedStateHandle) : ViewModel() 
         enqueue(PendingMessage(UUID.randomUUID().toString(), null, attachment, System.currentTimeMillis()))
     }
 
-    /** Reads a picked / captured file off the main thread, validates it, and sends it. */
     fun attach(resolver: ContentResolver, uri: Uri, nameOverride: String? = null, mimeOverride: String? = null) {
         viewModelScope.launch {
             when (val result = withContext(Dispatchers.IO) { AttachmentReader.read(resolver, uri, nameOverride, mimeOverride) }) {
@@ -175,7 +162,6 @@ internal class ChatViewModel(private val saved: SavedStateHandle) : ViewModel() 
         }
     }
 
-    /** Tap on a failed bubble: same clientMessageId, same bytes. */
     fun retry(clientMessageId: String) {
         val item = pending.markRetrying(clientMessageId) ?: return
         render()
@@ -198,7 +184,6 @@ internal class ChatViewModel(private val saved: SavedStateHandle) : ViewModel() 
             val result = try {
                 Result.success(attempt(client, item))
             } catch (error: HaloChatException.SendInProgress) {
-                // The first attempt is still running server-side: wait, re-read, retry once.
                 delay(SEND_IN_PROGRESS_WAIT_MS)
                 runCatching { client.latestMessages() }.getOrNull()?.messages?.forEach { older[it.id] = it }
                 runCatchingNonCancel { attempt(client, item) }
@@ -240,10 +225,6 @@ internal class ChatViewModel(private val saved: SavedStateHandle) : ViewModel() 
 
     private var bannerClearJob: Job? = null
 
-    /**
-     * The timeline only emits when messages change, so a recovered connection is not signalled.
-     * While offline the core reports a failure every poll (~5 s); hide the banner once they stop.
-     */
     private fun setBanner(banner: Banner) {
         if (_state.value.sessionExpired) return
         _state.value = _state.value.copy(banner = banner, loaded = true)
@@ -254,7 +235,6 @@ internal class ChatViewModel(private val saved: SavedStateHandle) : ViewModel() 
         }
     }
 
-    /** Rebuilds rows off the main thread; the newest render wins. */
     private fun render() {
         val messagesSources = arrayOf<Collection<HaloChatMessage>>(older.values.toList(), sent.values.toList(), timeline)
         val queue = pending.snapshot

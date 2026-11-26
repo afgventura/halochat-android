@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 
-/** What one chat screen shows; travels to [HaloChatActivity] as intent extras. */
 internal data class ChatOptions(
     val title: String? = null,
     val subtitle: RoomSubtitle = RoomSubtitle.ENABLED,
@@ -23,7 +22,6 @@ internal data class ChatOptions(
         .putExtra(EXTRA_AUTO, automaticMessage)
         .putExtra(EXTRA_MANUAL, manualMessage)
 
-    /** Options for a chat opened from a notification: the last opened ones, minus one-shot messages. */
     fun withoutOneShotMessages(): ChatOptions = copy(automaticMessage = null, manualMessage = null)
 
     companion object {
@@ -52,43 +50,23 @@ internal data class ChatOptions(
     }
 }
 
-/**
- * Configures and opens the chat screen (Qiscus `initiateChat()` builder).
- *
- * ```kotlin
- * HaloChatWidget.instance.initiateChat()
- *     .setRoomTitle("Bantuan")
- *     .setRoomSubtitle(RoomSubtitle.EDITABLE, "Biasanya membalas dalam beberapa menit")
- *     .startChat(context)
- * ```
- */
 public class ChatBuilder internal constructor(private val widget: HaloChatWidget) {
     private var options = ChatOptions()
 
-    /** Header title. Default: the conversation title (the channel label). */
     public fun setRoomTitle(title: String): ChatBuilder = apply { options = options.copy(title = title) }
 
-    /** Header subtitle: [RoomSubtitle.ENABLED] (default, "Customer Service"), DISABLED, or EDITABLE with [text]. */
     @JvmOverloads
     public fun setRoomSubtitle(mode: RoomSubtitle, text: String? = null): ChatBuilder =
         apply { options = options.copy(subtitle = mode, subtitleText = text) }
 
-    /** Show system events (`senderKind == system`) as centered pills. Default true. */
     public fun setShowSystemMessage(show: Boolean): ChatBuilder = apply { options = options.copy(showSystemMessage = show) }
 
-    /** Avatar + sender name on the first business-side bubble of each run. Default ENABLED. */
     public fun setAvatar(avatar: Avatar): ChatBuilder = apply { options = options.copy(avatar = avatar) }
 
-    /** Sent once, as the user, when the chat opens. */
     public fun automaticSendMessage(text: String): ChatBuilder = apply { options = options.copy(automaticMessage = text) }
 
-    /** Pre-filled in the composer when the chat opens; the user decides whether to send it. */
     public fun manualSendMessage(text: String): ChatBuilder = apply { options = options.copy(manualMessage = text) }
 
-    /**
-     * Opens [HaloChatActivity]. Call [HaloChatWidget.setUser] first; without a user the screen
-     * shows "Session expired".
-     */
     public fun startChat(context: Context) {
         widget.lastOptions = options.withoutOneShotMessages()
         context.startActivity(HaloChatActivity.intent(context, options))

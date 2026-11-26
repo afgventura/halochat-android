@@ -45,10 +45,6 @@ import id.co.haloai.halochat.HaloChatMessage
 import kotlinx.coroutines.launch
 import java.io.File
 
-/**
- * The chat screen. Open it with `HaloChatWidget.instance.initiateChat()…startChat(context)`.
- * Declared in the SDK's manifest with the SDK's own AppCompat theme, so it works in any host app.
- */
 public class HaloChatActivity : AppCompatActivity(), ChatActions {
     private val viewModel: ChatViewModel by viewModels()
     private lateinit var options: ChatOptions
@@ -94,7 +90,6 @@ public class HaloChatActivity : AppCompatActivity(), ChatActions {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         options = ChatOptions.from(intent.extras)
-        // Normally set up by the host's Application; a default instance keeps a cold start safe.
         val widget = HaloChatWidget.setup(this)
         color = widget.color
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -106,7 +101,6 @@ public class HaloChatActivity : AppCompatActivity(), ChatActions {
         list.adapter = adapter
 
         viewModel.start(options)
-        // Once per chat: after rotation the EditText restores whatever the user left in it.
         viewModel.consumeManualMessage()?.let { text ->
             input.setText(text)
             input.setSelection(input.length())
@@ -173,7 +167,6 @@ public class HaloChatActivity : AppCompatActivity(), ChatActions {
         }
     }
 
-    /** Scrolled to (or cannot scroll away from) the top: fetch the next older page. */
     private fun maybeLoadOlder() {
         if (!viewModel.canLoadOlder || adapter.itemCount == 0) return
         if (layoutManager.findFirstVisibleItemPosition() <= 2 || !list.canScrollVertically(-1)) viewModel.loadOlder()
@@ -203,7 +196,6 @@ public class HaloChatActivity : AppCompatActivity(), ChatActions {
             .show()
     }
 
-    /** If the HOST app declares CAMERA, the system requires it granted before ACTION_IMAGE_CAPTURE. */
     private fun startCamera() {
         if (hostDeclaresCamera() &&
             ContextCompat.checkSelfPermission(this, Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED
@@ -473,8 +465,6 @@ public class HaloChatActivity : AppCompatActivity(), ChatActions {
     }
 }
 
-/** `${applicationId}.halochat.fileprovider`, declared by the SDK's manifest. */
 internal fun fileProviderAuthority(context: Context): String = context.packageName + ".halochat.fileprovider"
 
-/** The SDK's own FileProvider subclass, so its manifest entry never merges with the host app's. */
 internal class HaloChatFileProvider : FileProvider()

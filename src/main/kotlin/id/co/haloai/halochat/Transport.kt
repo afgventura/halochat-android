@@ -34,10 +34,6 @@ internal val haloJson: Json = Json {
     coerceInputValues = true
 }
 
-/**
- * One token for all concurrent calls, and at most one refresh at a time: N calls that all
- * hit 401 with the same token trigger a single mint (each mint is a server session).
- */
 internal class TokenGate(private val provider: HaloChatTokenProvider) {
     private val mutex = Mutex()
     private var current: String? = null
@@ -49,7 +45,6 @@ internal class TokenGate(private val provider: HaloChatTokenProvider) {
         current ?: provider.token(forceRefresh = false).also { current = it }
     }
 
-    /** [rejected] is the token the server refused; if another caller already replaced it, reuse that. */
     suspend fun refresh(rejected: String): String {
         val fresh = mutex.withLock {
             val known = current
@@ -67,7 +62,6 @@ internal class TokenGate(private val provider: HaloChatTokenProvider) {
 
 internal val jsonMediaType = "application/json".toMediaType()
 
-/** HTTP plumbing: bearer auth with one refresh on 401, error mapping, JSON coding. */
 internal class Transport(
     baseUrl: String,
     internal val http: OkHttpClient,
@@ -92,7 +86,6 @@ internal class Transport(
         }
     }
 
-    /** Runs [request] with the current token; on 401 refreshes once and retries. Returns the body. */
     suspend fun perform(request: Request): String {
         val token = tokens.token()
         var response = execute(authorized(request, token))
@@ -101,9 +94,6 @@ internal class Transport(
             response = execute(authorized(request, tokens.refresh(rejected = token)))
         }
         response.use {
-            // Reading the body is blocking socket I/O: never on the caller's thread, which on
-            // Android is usually Main (lifecycleScope / viewModelScope) and would throw
-            // NetworkOnMainThreadException on every call.
             val body = withContext(Dispatchers.IO) { it.body?.string().orEmpty() }
             check(it, body)
             return body
@@ -119,7 +109,6 @@ internal class Transport(
             }
 
             override fun onResponse(call: Call, response: Response) {
-                // Cancelled at the same moment: close it instead of leaking the connection.
                 continuation.resume(response) { response.close() }
             }
         })

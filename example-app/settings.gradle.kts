@@ -1,5 +1,3 @@
-// A separate Android app build on the LOCAL SDK sources (composite build), so it always
-// matches the code next to it. Apps install the published artifacts instead (see README).
 pluginManagement {
     repositories {
         google()

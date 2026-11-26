@@ -19,11 +19,6 @@ import java.io.IOException
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
-/**
- * Downloads attachments. Every load asks the server for a fresh media URL (they expire after
- * 15 minutes and are never persisted). Decoded thumbnails live in an in-memory LRU keyed by
- * message id; opened files live in the app's cache dir.
- */
 internal class MediaRepository(private val widget: HaloChatWidget) {
     private val thumbnails = object : LruCache<String, Bitmap>(cacheKilobytes()) {
         override fun sizeOf(key: String, value: Bitmap): Int = (value.byteCount / 1024).coerceAtLeast(1)
@@ -33,7 +28,6 @@ internal class MediaRepository(private val widget: HaloChatWidget) {
 
     fun cachedThumbnail(messageId: String): Bitmap? = thumbnails.get(messageId)
 
-    /** A downsampled (longest side ≈ [maxPx]) bitmap of an image message; cached by message id. */
     suspend fun thumbnail(messageId: String, maxPx: Int): Bitmap? {
         thumbnails.get(messageId)?.let { return it }
         val bitmap = withContext(Dispatchers.IO) { decode(download(messageId), maxPx) } ?: return null
@@ -41,11 +35,9 @@ internal class MediaRepository(private val widget: HaloChatWidget) {
         return bitmap
     }
 
-    /** A larger, uncached bitmap for the full-screen viewer. */
     suspend fun fullImage(messageId: String, maxPx: Int): Bitmap? =
         withContext(Dispatchers.IO) { decode(download(messageId), maxPx) }
 
-    /** Downloads a file message into the cache dir (reused on the next tap) and returns it. */
     suspend fun file(messageId: String, filename: String?): File = withContext(Dispatchers.IO) {
         val dir = File(filesDir, AttachmentRules.safeFilename(messageId, "file"))
         val target = File(dir, AttachmentRules.safeFilename(filename, "attachment"))
@@ -106,7 +98,6 @@ internal class MediaRepository(private val widget: HaloChatWidget) {
     }
 }
 
-/** Suspends on an OkHttp call; cancelling the coroutine cancels the call. */
 internal suspend fun Call.await(): Response = suspendCancellableCoroutine { continuation ->
     continuation.invokeOnCancellation { cancel() }
     enqueue(object : Callback {

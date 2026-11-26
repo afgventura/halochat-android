@@ -97,7 +97,6 @@ class HaloChatClientTest {
 
     @Test
     fun concurrentFirstCallsMintOneToken() = runTest {
-        // A real backend takes time to mint; every call it receives is a new server session.
         val calls = AtomicInteger(0)
         val gate = TokenGate(HaloChatTokenProvider { _ ->
             calls.incrementAndGet()
@@ -116,9 +115,9 @@ class HaloChatClientTest {
             """{"id":"$id","text":"t","sender":"agent","senderKind":"ai","hasMedia":false,"mediaType":null,"mediaFilename":null,"createdAt":"2026-09-29T08:00:0$second.000Z","status":null}"""
         fun page(messages: List<String>, newest: String) =
             ok("""{"status":"ok","data":{"messages":[${messages.joinToString(",")}],"newestCursor":"$newest","oldestCursor":"c0"}}""")
-        server.enqueue(page(listOf(message("m1", 1)), "c1")) // backfill
-        server.enqueue(page(listOf(message("m1", 1)), "c1")) // catch-up: overlap only
-        server.enqueue(page(listOf(message("m1", 1), message("m2", 2)), "c2")) // poll while the socket is down
+        server.enqueue(page(listOf(message("m1", 1)), "c1"))
+        server.enqueue(page(listOf(message("m1", 1)), "c1"))
+        server.enqueue(page(listOf(message("m1", 1), message("m2", 2)), "c2"))
         val offline = HaloChatClient(
             config = HaloChatConfig(
                 baseUrl = server.url("/").toString(),
@@ -131,7 +130,7 @@ class HaloChatClientTest {
         val timeline = withTimeout(10_000) { offline.timeline().first { it.size == 2 } }
 
         assertEquals(listOf("m1", "m2"), timeline.map { it.id }, "polling must deliver the new message once, in order")
-        server.takeRequest() // backfill
+        server.takeRequest()
         val catchUp = server.takeRequest()
         assertEquals("c1", catchUp.requestUrl?.queryParameter("after"), "catch-up must resume from the backfill cursor")
     }
